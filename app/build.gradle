@@ -1,0 +1,51 @@
+plugins {
+    id 'com.android.application'
+}
+
+// ====== UBAH DI SINI bila perlu ======
+def PORTAL_URL = "https://palapanetstb.duckdns.org:121/c"
+def APP_NAME   = "PalapaNet"
+// =====================================
+
+android {
+    namespace 'id.palapanet.portal'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "id.palapanet.portal"
+        minSdk 24
+        targetSdk 34
+        versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+        versionName "1.0." + (System.getenv("GITHUB_RUN_NUMBER") ?: "1")
+        buildConfigField "String", "PORTAL_URL", "\"${PORTAL_URL}\""
+        resValue "string", "app_name", APP_NAME
+    }
+
+    buildFeatures { buildConfig true }
+
+    // Tanda tangan rilis: dari GitHub Secrets (lihat README). Tanpa secrets, APK ditandatangani kunci debug.
+    signingConfigs {
+        release {
+            def ks = System.getenv("KEYSTORE_FILE")
+            if (ks && file(ks).exists()) {
+                storeFile file(ks)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig (System.getenv("KEYSTORE_FILE") ? signingConfigs.release : signingConfigs.debug)
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+// Tanpa library tambahan: hanya komponen bawaan Android (WebView).
